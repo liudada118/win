@@ -9,8 +9,9 @@ import ThreeWinGroup from './assets/util';
 function App() {
   const [open, setOpen] = useState(false);
   const [nowMesh, setNowMesh] = useState(null)
-  const [col, setCol] = useState()
-  const [row, setRow] = useState()
+  const [nowBox, setBox] = useState(null)
+  const [col, setCol] = useState('200,800')
+  const [row, setRow] = useState('400,1,3')
   const win = useRef()
   let camera, scene, renderer, controls;
   let selectedObject = null;
@@ -82,10 +83,15 @@ function App() {
       // 如果有交点，说明点击了物体
       if (intersects.length > 0) {
         var clickedObject = intersects[0].object;
-        console.log('点击了物体:', clickedObject);
-        setNowMesh(clickedObject)
-        // 在这里添加你的事件处理逻辑
-        showDrawer()
+        console.log('点击了物体:', clickedObject.geometry);
+        if(clickedObject.geometry.type === "PlaneGeometry"){
+          setBox(clickedObject)
+        }else{
+          setNowMesh(clickedObject)
+          // 在这里添加你的事件处理逻辑
+          showDrawer()
+        }
+        
       }
     }
 
@@ -217,7 +223,7 @@ function App() {
         <div className='boxItem'></div>
       </div>
       <Drawer title="添加属性" placement="right" onClose={onClose} open={open}>
-        <div style={{ display: 'flex' }}>竖庭<Input value={col} onChange={(e) => {
+        {nowMesh ? <div style={{ display: 'flex' }}>竖庭<Input value={col} onChange={(e) => {
           setCol(e.target.value)
         }} /> <Button onClick={() => {
           win.current.addCol(col.split(',').map((a) => Number(a)))
@@ -227,7 +233,7 @@ function App() {
           setRow(e.target.value)
         }} /> <Button onClick={() => {
           win.current.addRow(row.split(',').map((a) => Number(a)))
-        }}>添加</Button></div>
+        }}>添加</Button></div>}
       </Drawer>
     </>
 
