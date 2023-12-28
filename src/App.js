@@ -6,10 +6,11 @@ import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { Button, Drawer, Input } from 'antd';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import ThreeWinGroup from './assets/util';
-const colorArr = ['#ff0000' , '#00ff00', '#0000ff']
+const colorArr = ['#ff0000', '#00ff00', '#0000ff']
 function App() {
   const [open, setOpen] = useState(false);
   const [nowMesh, setNowMesh] = useState(null)
+  const [isWindow, setIsWindow] = useState(null)
   const [nowBox, setBox] = useState(null)
   const [col, setCol] = useState('200,800')
   const [row, setRow] = useState('400,1,3')
@@ -31,14 +32,15 @@ function App() {
 
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    const camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.1, 10000);
+    // const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     const controls = new TrackballControls(camera, renderer.domElement);
 
-
+    renderer.setClearColor(0xaaaaaa)
 
     win.current = new ThreeWinGroup({ sence: scene })
     win.current.addWin({ width: 1000, height: 500, })
@@ -84,7 +86,7 @@ function App() {
       // 如果有交点，说明点击了物体
       if (intersects.length > 0) {
         var clickedObject = intersects[0].object;
-        console.log('点击了物体:', clickedObject.geometry);
+        console.log('点击了物体:', clickedObject.geometry, clickedObject);
         // if(clickedObject.geometry.type === "PlaneGeometry"){
         //   setBox(clickedObject)
         //   showDrawer()
@@ -93,8 +95,17 @@ function App() {
         //   // 在这里添加你的事件处理逻辑
         //   showDrawer()
         // }
-        setNowMesh(clickedObject)
-        showDrawer()
+        if(!clickedObject.name.includes( 'handle')){
+          const iswindow = clickedObject.parent.name === 'window'
+          console.log(iswindow)
+          setIsWindow(iswindow)
+          setNowMesh(clickedObject)
+          showDrawer()
+        }else{
+          const rotationName = clickedObject.name.split( 'handle')[1]
+          // const rotationBox = clickedObject.parent.filter
+        }
+        
       }
     }
 
@@ -226,33 +237,51 @@ function App() {
         <div className='boxItem'></div>
       </div>
       <Drawer title="添加属性" placement="right" onClose={onClose} open={open}>
-        {nowMesh?.geometry?.type == 'BoxGeometry' ? <><div style={{ display: 'flex' }}>竖庭<Input value={col} onChange={(e) => {
+        {isWindow ? <>
+          <Button
+            onClick={() => {
+              const position = {}
+              position.x = nowMesh.position.x + nowMesh.parent.position.x
+              position.y = nowMesh.position.y + nowMesh.parent.position.y
+              position.z = nowMesh.position.z + nowMesh.parent.position.z
+              win.current.addHandle({ width: nowMesh.geometry.parameters.width, height: nowMesh.geometry.parameters.height, position: nowMesh.position ,mesh : nowMesh })
+            }}
+          >添加把手</Button>
+        </> : nowMesh?.geometry?.type == 'BoxGeometry' ? <><div style={{ display: 'flex' }}>竖庭<Input value={col} onChange={(e) => {
           setCol(e.target.value)
         }} /> <Button onClick={() => {
           win.current.addCol(col.split(',').map((a) => Number(a)))
         }}>添加</Button></div>
 
-        <div style={{ display: 'flex' }}>横庭<Input value={row} onChange={(e) => {
-          setRow(e.target.value)
-        }} /> <Button onClick={() => {
-          win.current.addRow(row.split(',').map((a) => Number(a)))
-        }}>添加</Button></div> </>: <div> 
+          <div style={{ display: 'flex' }}>横庭<Input value={row} onChange={(e) => {
+            setRow(e.target.value)
+          }} /> <Button onClick={() => {
+            win.current.addRow(row.split(',').map((a) => Number(a)))
+          }}>添加</Button></div> </> : <div>
           <Button onClick={() => {
             const glassMaterial = new THREE.MeshPhysicalMaterial({
               color: 0x053112,
-               transparent: true, // 透明度设置为 true
-               opacity: 0.6, // 设置透明度
-               roughness: 0,
-               metalness: 0,
-               envMapIntensity: 1,//需要搭配transparent
-               transmission: 0.95, // 折射度，表示光线经过材料时的衰减程度
-               clearcoat: 1,
-               clearcoatRoughness: 0,
-               refractionRatio: 1.5, // 折射率，控制光的折射程度
-           });
-           nowMesh.material = glassMaterial
-           
+              transparent: true, // 透明度设置为 true
+              opacity: 0.6, // 设置透明度
+              roughness: 0,
+              metalness: 0,
+              envMapIntensity: 1,//需要搭配transparent
+              transmission: 0.95, // 折射度，表示光线经过材料时的衰减程度
+              clearcoat: 1,
+              clearcoatRoughness: 0,
+              refractionRatio: 1.5, // 折射率，控制光的折射程度
+            });
+            nowMesh.material = glassMaterial
+
           }}>玻璃</Button>
+
+          <Button onClick={() => {
+            // console.log(nowMesh,win.current.sence)
+            // win.current.sence.remove(nowMesh)
+            // nowMesh.geometry.dispose();
+            // nowMesh.material.dispose();
+            win.current.addWindow({ width: nowMesh.geometry.parameters.width, height: nowMesh.geometry.parameters.height, position: nowMesh.position })
+          }}>窗户</Button>
         </div>}
       </Drawer>
     </>
