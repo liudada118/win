@@ -6,6 +6,7 @@ import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { Button, Drawer, Input } from 'antd';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import ThreeWinGroup from './assets/util';
+import TWEEN from "@tweenjs/tween.js";
 const colorArr = ['#ff0000', '#00ff00', '#0000ff']
 function App() {
   const [open, setOpen] = useState(false);
@@ -28,6 +29,8 @@ function App() {
     setOpen(false);
   };
 
+
+
   useEffect(() => {
 
 
@@ -49,6 +52,7 @@ function App() {
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      TWEEN.update();
       controls.keys = {
         LEFT: 'ArrowLeft', //left arrow
         UP: 'ArrowUp', // up arrow
@@ -102,8 +106,9 @@ function App() {
           setNowMesh(clickedObject)
           showDrawer()
         }else{
-          const rotationName = clickedObject.name.split( 'handle')[1]
-          // const rotationBox = clickedObject.parent.filter
+          win.current.winAddEvent({clickedObject,win})
+          // window.rotation.y = -Math.PI/3
+          // console.log(rotationBox)
         }
         
       }
@@ -247,6 +252,9 @@ function App() {
               win.current.addHandle({ width: nowMesh.geometry.parameters.width, height: nowMesh.geometry.parameters.height, position: nowMesh.position ,mesh : nowMesh })
             }}
           >添加把手</Button>
+          <Button onClick={() => {
+            win.current.sence.remove(nowMesh.parent)
+          }}>删除</Button>
         </> : nowMesh?.geometry?.type == 'BoxGeometry' ? <><div style={{ display: 'flex' }}>竖庭<Input value={col} onChange={(e) => {
           setCol(e.target.value)
         }} /> <Button onClick={() => {

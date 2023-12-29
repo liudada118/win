@@ -1,10 +1,32 @@
 import * as THREE from 'three';
-
+import TWEEN from "@tweenjs/tween.js";
 const directionObj = {
-    L : 'R',
-    R : 'L',
-    B : 'T',
-    T : 'B'
+    L: 'R',
+    R: 'L',
+    B: 'T',
+    T: 'B'
+}
+
+function rotation(rotation, time, particles) {
+    const p1 = {
+        x: particles.position.x,
+        y: particles.position.y,
+        z: particles.position.z,
+        rotationx: particles.rotation.x,
+        rotationy: particles.rotation.y,
+        rotationz: particles.rotation.z,
+    };
+
+    const tween1 = new TWEEN.Tween(p1)
+        .to(rotation, time)
+        .easing(TWEEN.Easing.Quadratic.InOut);
+
+    tween1.onUpdate(() => {
+
+        particles.rotation.y = p1.rotationy;
+    });
+
+    return tween1;
 }
 
 const glassMaterial = new THREE.MeshPhysicalMaterial({
@@ -274,7 +296,7 @@ export default class ThreeWinGroup {
 
 
     addHandle({ width, height, position, mesh }) {
-        const geometryL = new THREE.BoxGeometry(this.MeshHeight/2, this.MeshHeight * 2, this.meshWeight);
+        const geometryL = new THREE.BoxGeometry(this.MeshHeight / 2, this.MeshHeight * 2, this.meshWeight);
         const materialL = new THREE.MeshBasicMaterial({ color: 0x000000 });
         const cubeHandle = new THREE.Mesh(geometryL, materialL);
         console.log(mesh.name.split('window'))
@@ -286,5 +308,26 @@ export default class ThreeWinGroup {
         cubeHandle.position.y = position.y
         cubeHandle.position.z = this.meshWeight
         mesh.parent.add(cubeHandle)
+    }
+
+    winAddEvent({ clickedObject, win }) {
+        const rotationName = clickedObject.name.split('handle')[1]
+        console.log(clickedObject.parent, rotationName, 'parent')
+
+        const rotationBox = clickedObject.parent.children.filter((a) => a.name == 'window' + rotationName)[0]
+        const rotationAxis = clickedObject.parent.position.x + rotationBox.position.x
+        const window = clickedObject.parent
+        win.current.sence.remove(window)
+        const newgroup = new THREE.Group()
+        newgroup.position.x = window.position.x + rotationBox.position.x
+        newgroup.add(window)
+        newgroup.name = 'eventWin'
+        window.position.x = - rotationBox.position.x
+        win.current.sence.add(newgroup)
+        // var axis = new THREE.Vector3(1, rotationAxis, 0).normalize(); // 设置新的旋转轴，这里以斜向上为例
+        // window.rotateOnAxis(axis, Math.PI/3); 
+        console.log(newgroup, window, rotationBox)
+        const tweena = rotation({ rotationy:rotationName == 'R' ? -Math.PI / 4 : rotationName == 'L' ? Math.PI / 4 : 0}, 1000, newgroup)
+        tweena.start();
     }
 }
